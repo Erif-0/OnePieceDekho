@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Stats</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo.svg') }}">
+    <style>
+        :root {
+            --deep-space: #09122C;
+            --crimson-glory: #BE3144;
+            --coral-glow: #E17564;
+            --platinum: #E0E0E0;
+        }
+
+        body {
+            background: url("{{ url_for('static', filename='background.png') }}") no-repeat center center fixed;
+            background-size: cover;
+            color: var(--platinum);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        .stats-header {
+            background: rgba(13, 22, 48, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(225,117,100,0.1);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            background: rgba(13, 22, 48, 0.9);
+            border-radius: 16px;
+            border: 1px solid rgba(225,117,100,0.1);
+            backdrop-filter: blur(8px);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .progress {
+            height: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--coral-glow) 0%, var(--crimson-glory) 100%);
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            color: var(--coral-glow);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .arc-progress-item {
+            padding: 1rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .arc-progress-item:hover {
+            background: rgba(255,255,255,0.05);
+            transform: translateX(5px);
+        }
+
+        .nav-logo {
+            width: 200px;
+            height: auto;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-logo:hover {
+            opacity: 0.9;
+        }
+
+        .back-btn {
+            background: rgba(225,117,100,0.1);
+            border: 1px solid var(--coral-glow);
+            color: var(--platinum);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(225,117,100,0.2);
+            transform: translateY(-2px);
+        }
+        .arc-content-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.arc-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(225,117,100,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.arc-text {
+    flex: 1;
+    min-width: 0;
+}
+    </style>
+</head>
+<body>
+    <header class="stats-header">
+        <div class="container-lg">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="/watch">
+                    <img src="{{ url_for('static', filename='logo.svg') }}" 
+                         alt="Logo" 
+                         class="nav-logo">
+                </a>
+                <a href="/watch" class="btn back-btn">
+                    <i class="bi bi-arrow-left"></i> Back to Guide
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-lg py-4">
+        <div class="row g-4">
+            <!-- Overall Stats Card -->
+            <div class="col-lg-4">
+                <div class="stats-card h-100">
+                    <h3 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Quick Stats</h3>
+                    <div class="d-flex flex-column gap-4">
+                        <div>
+                            <div class="stat-number" id="totalWatched">0</div>
+                            <div class="stat-label">Episodes Watched</div>
+                        </div>
+                        <div>
+                            <div class="stat-number" id="totalEpisodes">0</div>
+                            <div class="stat-label">Total Episodes</div>
+                        </div>
+                        <div>
+                            <div class="stat-number" id="completedArcs">0</div>
+                            <div class="stat-label">Completed Arcs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Card -->
+            <div class="col-lg-8">
+                <div class="stats-card">
+                    <h3 class="mb-4"><i class="bi bi-graph-up me-2"></i>Overall Progress</h3>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="progress flex-grow-1">
+                            <div id="totalProgress" class="progress-bar"></div>
+                        </div>
+                        <div class="stat-number" id="totalPercentage">0%</div>
+                    </div>
+                    
+                    <h4 class="mb-3"><i class="bi bi-collection-play me-2"></i>Arc Progress</h4>
+                    <div class="arc-progress-list">
+                        {% for arc in arcs %}
+                        <div class="arc-progress-item" 
+     data-slug="{{ arc.slug }}" 
+     data-total="{{ arc.total_episodes }}">
+    <!-- Added image container and content wrapper -->
+    <div class="arc-content-wrapper">
+        <img src="{{ arc.image }}" class="arc-image" alt="{{ arc.name }} poster">
+        <div class="arc-text">
+            <div class="d-flex justify-content-between mb-2">
+                <div class="text-truncate pe-2">{{ arc.name }}</div>
+                <div class="text-nowrap">
+                    <span class="watched-count">0</span>/{{ arc.total_episodes }}
+                </div>
+            </div>
+            <div class="progress">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateStats() {
+            let totalWatched = 0;
+            let totalEpisodes = 0;
+            let completedArcs = 0;
+
+            // Calculate per-arc progress
+            document.querySelectorAll('.arc-progress-item').forEach(progress => {
+                const slug = progress.dataset.slug;
+                const total = parseInt(progress.dataset.total);
+                const watched = Object.keys(localStorage)
+                    .filter(key => key.startsWith(`${slug}-`))
+                    .length;
+
+                // Update progress bar
+                const progressBar = progress.querySelector('.progress-bar');
+                const percentage = (watched / total) * 100;
+                progressBar.style.width = `${percentage}%`;
+
+                // Update watched count
+                progress.querySelector('.watched-count').textContent = watched;
+
+                // Update totals
+                totalWatched += watched;
+                totalEpisodes += total;
+                
+                // Count completed arcs
+                if (watched === total) completedArcs++;
+            });
+
+            // Update overall progress
+            const totalPercentage = totalEpisodes > 0 ? 
+                (totalWatched / totalEpisodes) * 100 : 0;
+                
+            document.querySelector('#totalProgress').style.width = `${totalPercentage}%`;
+            document.querySelector('#totalPercentage').textContent = 
+                `${totalPercentage.toFixed(1)}%`;
+
+            // Update stat numbers
+            document.querySelector('#totalWatched').textContent = totalWatched;
+            document.querySelector('#totalEpisodes').textContent = totalEpisodes;
+            document.querySelector('#completedArcs').textContent = completedArcs;
+        }
+
+        // Initial calculation
+        document.addEventListener('DOMContentLoaded', calculateStats);
+
+        // Update when storage changes
+        window.addEventListener('storage', () => {
+            calculateStats();
+            // Add visual feedback
+            document.querySelector('#totalProgress').style.transform = 'scaleX(1.02)';
+            setTimeout(() => {
+                document.querySelector('#totalProgress').style.transform = 'scaleX(1)';
+            }, 200);
+        });
+
+        // Add animation to progress bars on load
+        setTimeout(() => {
+            document.querySelectorAll('.progress-bar').forEach(bar => {
+                bar.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            });
+        }, 500);
+    </script>
+</body>
+</html>
